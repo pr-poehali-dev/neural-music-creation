@@ -15,15 +15,15 @@ interface MusicParameters {
 const genres = ["Поп", "Рок", "Электронная", "Хип-хоп", "Классическая", "Джаз", "Эмбиент"];
 const moods = ["Веселая", "Грустная", "Энергичная", "Спокойная", "Мистическая"];
 
-// Предустановленные аудио для разных жанров (меняем на прямые MP3-ссылки)
+// Используем гарантированно публичные аудиофайлы
 const genreAudios = {
-  "Поп": "https://cdn.freesound.org/previews/635/635596_1089955-lq.mp3",
-  "Рок": "https://cdn.freesound.org/previews/531/531482_701057-lq.mp3",
-  "Электронная": "https://cdn.freesound.org/previews/612/612092_5674468-lq.mp3",
-  "Хип-хоп": "https://cdn.freesound.org/previews/559/559703_10652870-lq.mp3",
-  "Классическая": "https://cdn.freesound.org/previews/553/553827_5526075-lq.mp3",
-  "Джаз": "https://cdn.freesound.org/previews/635/635369_6596651-lq.mp3",
-  "Эмбиент": "https://cdn.freesound.org/previews/342/342166_4284968-lq.mp3",
+  "Поп": "https://file-examples.com/storage/fef1706276a764f06984236/2017/11/file_example_MP3_700KB.mp3",
+  "Рок": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+  "Электронная": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+  "Хип-хоп": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+  "Классическая": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+  "Джаз": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+  "Эмбиент": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
 };
 
 const MusicGenerator: React.FC = () => {
@@ -56,7 +56,7 @@ const MusicGenerator: React.FC = () => {
     }, 300);
   };
 
-  // Имитация получения аудиофайла (в реальном приложении здесь будет API-запрос)
+  // Имитация получения аудиофайла
   const simulateAudioGeneration = () => {
     setTimeout(() => {
       // Выбираем аудио в зависимости от выбранного жанра
@@ -76,7 +76,13 @@ const MusicGenerator: React.FC = () => {
 
   const handleDownload = () => {
     if (audioUrl) {
-      window.open(audioUrl, '_blank');
+      // Создаем прямую ссылку для скачивания
+      const link = document.createElement('a');
+      link.href = audioUrl;
+      link.download = `${parameters.genre}-${parameters.mood}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -175,12 +181,12 @@ const MusicGenerator: React.FC = () => {
                   {parameters.genre} • {parameters.mood} • {parameters.tempo} BPM
                 </p>
                 
-                {/* Стандартный HTML5 аудио-плеер с полными контролами */}
+                {/* Стандартный HTML5 аудио-плеер с контролами */}
                 <audio 
                   controls 
                   className="w-full" 
                   src={audioUrl} 
-                  preload="auto"
+                  controlsList="nodownload"
                 >
                   Ваш браузер не поддерживает аудио элемент.
                 </audio>

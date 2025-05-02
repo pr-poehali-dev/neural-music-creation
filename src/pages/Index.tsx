@@ -6,33 +6,39 @@ import MusicGenerator from "@/components/MusicGenerator";
 import InfoSection from "@/components/InfoSection";
 
 const Index = () => {
-  // Разные жанры для примеров
+  // Используем проверенные публичные аудио
   const exampleAudios = [
     {
       id: 1,
       genre: "Электронная",
       mood: "Энергичная",
       bpm: 128,
-      audio: "https://cdn.freesound.org/previews/612/612092_5674468-lq.mp3"
+      audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3"
     },
     {
       id: 2,
       genre: "Джаз",
       mood: "Спокойная",
       bpm: 95,
-      audio: "https://cdn.freesound.org/previews/635/635369_6596651-lq.mp3"
+      audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
     },
     {
       id: 3,
       genre: "Поп",
       mood: "Веселая",
       bpm: 120,
-      audio: "https://cdn.freesound.org/previews/635/635596_1089955-lq.mp3"
+      audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3"
     }
   ];
 
-  const handleDownloadExample = (url: string, title: string) => {
-    window.open(url, '_blank');
+  const handleDownloadExample = (url: string, id: number) => {
+    // Прямое скачивание через программное нажатие на ссылку
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `пример-${id}.mp3`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -78,22 +84,20 @@ const Index = () => {
                     controls 
                     className="w-full mb-4" 
                     src={example.audio}
-                    preload="auto"
+                    controlsList="nodownload"
                   >
                     Ваш браузер не поддерживает аудио элемент.
                   </audio>
                   
-                  <button 
-                    onClick={() => handleDownloadExample(example.audio, `пример-${example.id}`)}
-                    className="text-primary hover:underline inline-flex items-center text-sm"
+                  <Button 
+                    onClick={() => handleDownloadExample(example.audio, example.id)}
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
+                    <Icon name="Download" className="mr-2" />
                     Скачать трек
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
