@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import Icon from "@/components/ui/icon";
@@ -15,10 +15,22 @@ interface MusicParameters {
 const genres = ["Поп", "Рок", "Электронная", "Хип-хоп", "Классическая", "Джаз", "Эмбиент"];
 const moods = ["Веселая", "Грустная", "Энергичная", "Спокойная", "Мистическая"];
 
+// Предустановленные аудио для разных жанров
+const genreAudios = {
+  "Поп": "https://cdn.freesound.org/previews/635/635596_1089955-lq.mp3",
+  "Рок": "https://cdn.freesound.org/previews/531/531482_701057-lq.mp3",
+  "Электронная": "https://cdn.freesound.org/previews/612/612092_5674468-lq.mp3",
+  "Хип-хоп": "https://cdn.freesound.org/previews/559/559703_10652870-lq.mp3",
+  "Классическая": "https://cdn.freesound.org/previews/553/553827_5526075-lq.mp3",
+  "Джаз": "https://cdn.freesound.org/previews/635/635369_6596651-lq.mp3",
+  "Эмбиент": "https://cdn.freesound.org/previews/342/342166_4284968-lq.mp3",
+};
+
 const MusicGenerator: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [parameters, setParameters] = useState<MusicParameters>({
     genre: "Электронная",
@@ -26,6 +38,27 @@ const MusicGenerator: React.FC = () => {
     mood: "Энергичная",
     duration: 30,
   });
+
+  // Обработчик событий для аудио
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    
+    if (audioElement) {
+      const handlePlay = () => setIsPlaying(true);
+      const handlePause = () => setIsPlaying(false);
+      const handleEnded = () => setIsPlaying(false);
+      
+      audioElement.addEventListener('play', handlePlay);
+      audioElement.addEventListener('pause', handlePause);
+      audioElement.addEventListener('ended', handleEnded);
+      
+      return () => {
+        audioElement.removeEventListener('play', handlePlay);
+        audioElement.removeEventListener('pause', handlePause);
+        audioElement.removeEventListener('ended', handleEnded);
+      };
+    }
+  }, [audioUrl]);
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -49,9 +82,9 @@ const MusicGenerator: React.FC = () => {
   const simulateAudioGeneration = () => {
     // В реальном приложении здесь будет вызов API нейросети
     setTimeout(() => {
-      // Используем демо-звук для демонстрации
-      const demoAudio = "https://cdn.freesound.org/previews/612/612092_5674468-lq.mp3";
-      setAudioUrl(demoAudio);
+      // Выбираем аудио в зависимости от выбранного жанра
+      const generatedAudio = genreAudios[parameters.genre] || genreAudios["Электронная"];
+      setAudioUrl(generatedAudio);
       setIsGenerating(false);
     }, 1000);
   };
@@ -59,7 +92,17 @@ const MusicGenerator: React.FC = () => {
   const handlePlayPause = () => {
     if (audioRef.current) {
       if (audioRef.current.paused) {
-        audioRef.current.play();
+        const playPromise = audioRef.current.play();
+        // Обработка Promise для совместимости со всеми браузерами
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              // Аудио успешно запущено
+            })
+            .catch(error => {
+              console.error("Ошибка воспроизведения:", error);
+            });
+        }
       } else {
         audioRef.current.pause();
       }
@@ -68,12 +111,17 @@ const MusicGenerator: React.FC = () => {
 
   const handleDownload = () => {
     if (audioUrl) {
+      // Обходное решение для скачивания аудио с внешнего источника
       const a = document.createElement("a");
       a.href = audioUrl;
       a.download = `нейромузыка-${parameters.genre}-${parameters.mood}.mp3`;
+      a.target = "_blank"; // Открываем в новой вкладке для внешних ресурсов
+      a.rel = "noopener noreferrer";
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      setTimeout(() => {
+        document.body.removeChild(a);
+      }, 100);
     }
   };
 
@@ -167,7 +215,7 @@ const MusicGenerator: React.FC = () => {
             className="w-full"
             size="lg"
           >
-            <Icon name="Music" />
+            <Icon name="Music" className="mr-2" />
             Создать музыку
           </Button>
         )}
@@ -175,19 +223,36 @@ const MusicGenerator: React.FC = () => {
         {audioUrl && !isGenerating && (
           <div className="mt-6 space-y-4">
             <div className="bg-accent/30 rounded-lg p-4">
-              <div className="flex items-center gap-4">
-                <Button onClick={handlePlayPause} variant="outline" size="icon" className="rounded-full">
-                  <Icon name="PlayCircle" size={24} />
-                </Button>
-                <div className="flex-grow">
-                  <audio ref={audioRef} src={audioUrl} className="w-full" controls />
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <Button onClick={handlePlayPause} variant="outline" size="icon" className="rounded-full h-10 w-10 flex-shrink-0">
+                    <Icon name={isPlaying ? "Pause" : "Play"} size={20} />
+                  </Button>
+                  <div className="flex-grow">
+                    <p className="text-sm font-medium mb-1">{parameters.genre} • {parameters.mood} • {parameters.tempo} BPM</p>
+                    {/* preload="auto" обеспечивает предварительную загрузку аудио */}
+                    <audio 
+                      ref={audioRef} 
+                      src={audioUrl} 
+                      className="w-full" 
+                      controls 
+                      preload="auto"
+                      onError={(e) => console.error("Ошибка аудио:", e)}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-            <Button onClick={handleDownload} variant="secondary" className="w-full">
-              <Icon name="Download" />
-              Скачать трек
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleGenerate} variant="outline" className="flex-grow">
+                <Icon name="RefreshCw" className="mr-2" />
+                Сгенерировать заново
+              </Button>
+              <Button onClick={handleDownload} variant="secondary" className="flex-grow">
+                <Icon name="Download" className="mr-2" />
+                Скачать трек
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
