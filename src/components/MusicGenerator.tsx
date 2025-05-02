@@ -1,10 +1,9 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import Icon from "@/components/ui/icon";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import AudioPlayer from "@/components/AudioPlayer";
 
 interface MusicParameters {
   genre: string;
@@ -16,7 +15,7 @@ interface MusicParameters {
 const genres = ["Поп", "Рок", "Электронная", "Хип-хоп", "Классическая", "Джаз", "Эмбиент"];
 const moods = ["Веселая", "Грустная", "Энергичная", "Спокойная", "Мистическая"];
 
-// Предустановленные аудио для разных жанров
+// Предустановленные аудио для разных жанров (меняем на прямые MP3-ссылки)
 const genreAudios = {
   "Поп": "https://cdn.freesound.org/previews/635/635596_1089955-lq.mp3",
   "Рок": "https://cdn.freesound.org/previews/531/531482_701057-lq.mp3",
@@ -31,7 +30,6 @@ const MusicGenerator: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
-  const [audioError, setAudioError] = useState<string | null>(null);
   
   const [parameters, setParameters] = useState<MusicParameters>({
     genre: "Электронная",
@@ -43,7 +41,6 @@ const MusicGenerator: React.FC = () => {
   const handleGenerate = () => {
     setIsGenerating(true);
     setGenerationProgress(0);
-    setAudioError(null);
     
     // Имитация процесса генерации музыки
     const interval = setInterval(() => {
@@ -62,16 +59,10 @@ const MusicGenerator: React.FC = () => {
   // Имитация получения аудиофайла (в реальном приложении здесь будет API-запрос)
   const simulateAudioGeneration = () => {
     setTimeout(() => {
-      try {
-        // Выбираем аудио в зависимости от выбранного жанра
-        const generatedAudio = genreAudios[parameters.genre] || genreAudios["Электронная"];
-        setAudioUrl(generatedAudio);
-        setIsGenerating(false);
-      } catch (error) {
-        console.error("Ошибка при генерации аудио:", error);
-        setAudioError("Произошла ошибка при генерации музыки. Пожалуйста, попробуйте еще раз.");
-        setIsGenerating(false);
-      }
+      // Выбираем аудио в зависимости от выбранного жанра
+      const generatedAudio = genreAudios[parameters.genre] || genreAudios["Электронная"];
+      setAudioUrl(generatedAudio);
+      setIsGenerating(false);
     }, 1000);
   };
 
@@ -83,9 +74,10 @@ const MusicGenerator: React.FC = () => {
     setParameters({ ...parameters, [name]: value });
   };
 
-  const handleAudioError = (error: any) => {
-    console.error("Ошибка аудио:", error);
-    setAudioError("Не удалось воспроизвести аудио. Пожалуйста, попробуйте сгенерировать трек еще раз.");
+  const handleDownload = () => {
+    if (audioUrl) {
+      window.open(audioUrl, '_blank');
+    }
   };
 
   return (
@@ -175,32 +167,29 @@ const MusicGenerator: React.FC = () => {
           </Button>
         )}
 
-        {audioError && !isGenerating && (
-          <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
-            {audioError}
-            <Button 
-              onClick={handleGenerate} 
-              variant="outline" 
-              size="sm" 
-              className="mt-2 w-full"
-            >
-              Попробовать снова
-            </Button>
-          </div>
-        )}
-
-        {audioUrl && !isGenerating && !audioError && (
+        {audioUrl && !isGenerating && (
           <div className="mt-6 space-y-4">
-            <div className="rounded-lg p-4 border">
-              <p className="text-sm font-medium mb-3">
-                {parameters.genre} • {parameters.mood} • {parameters.tempo} BPM
-              </p>
-              
-              <AudioPlayer 
-                audioUrl={audioUrl} 
-                title={`${parameters.genre} трек - ${parameters.mood}`}
-                onError={handleAudioError}
-              />
+            <div className="rounded-lg p-4 border bg-accent/20">
+              <div className="space-y-3">
+                <p className="text-sm font-medium">
+                  {parameters.genre} • {parameters.mood} • {parameters.tempo} BPM
+                </p>
+                
+                {/* Стандартный HTML5 аудио-плеер с полными контролами */}
+                <audio 
+                  controls 
+                  className="w-full" 
+                  src={audioUrl} 
+                  preload="auto"
+                >
+                  Ваш браузер не поддерживает аудио элемент.
+                </audio>
+                
+                <Button onClick={handleDownload} variant="secondary" size="sm" className="w-full">
+                  <Icon name="Download" className="mr-2" />
+                  Скачать трек
+                </Button>
+              </div>
             </div>
             
             <Button onClick={handleGenerate} variant="outline" className="w-full">

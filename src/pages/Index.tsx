@@ -4,7 +4,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MusicGenerator from "@/components/MusicGenerator";
 import InfoSection from "@/components/InfoSection";
-import AudioPlayer from "@/components/AudioPlayer";
 
 const Index = () => {
   // Разные жанры для примеров
@@ -31,6 +30,10 @@ const Index = () => {
       audio: "https://cdn.freesound.org/previews/635/635596_1089955-lq.mp3"
     }
   ];
+
+  const handleDownloadExample = (url: string, title: string) => {
+    window.open(url, '_blank');
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -70,10 +73,27 @@ const Index = () => {
                     {example.genre} • {example.mood} • {example.bpm} BPM
                   </p>
                   
-                  <AudioPlayer 
-                    audioUrl={example.audio} 
-                    title={`${example.genre} - Пример ${example.id}`} 
-                  />
+                  {/* Стандартный HTML5 аудио-плеер */}
+                  <audio 
+                    controls 
+                    className="w-full mb-4" 
+                    src={example.audio}
+                    preload="auto"
+                  >
+                    Ваш браузер не поддерживает аудио элемент.
+                  </audio>
+                  
+                  <button 
+                    onClick={() => handleDownloadExample(example.audio, `пример-${example.id}`)}
+                    className="text-primary hover:underline inline-flex items-center text-sm"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Скачать трек
+                  </button>
                 </div>
               ))}
             </div>
