@@ -1,9 +1,10 @@
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import Icon from "@/components/ui/icon";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import AudioPlayer from "@/components/AudioPlayer";
 
 interface MusicParameters {
   genre: string;
@@ -30,8 +31,8 @@ const MusicGenerator: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  
   const [parameters, setParameters] = useState<MusicParameters>({
     genre: "Электронная",
     tempo: 120,
@@ -39,30 +40,10 @@ const MusicGenerator: React.FC = () => {
     duration: 30,
   });
 
-  // Обработчик событий для аудио
-  useEffect(() => {
-    const audioElement = audioRef.current;
-    
-    if (audioElement) {
-      const handlePlay = () => setIsPlaying(true);
-      const handlePause = () => setIsPlaying(false);
-      const handleEnded = () => setIsPlaying(false);
-      
-      audioElement.addEventListener('play', handlePlay);
-      audioElement.addEventListener('pause', handlePause);
-      audioElement.addEventListener('ended', handleEnded);
-      
-      return () => {
-        audioElement.removeEventListener('play', handlePlay);
-        audioElement.removeEventListener('pause', handlePause);
-        audioElement.removeEventListener('ended', handleEnded);
-      };
-    }
-  }, [audioUrl]);
-
   const handleGenerate = () => {
     setIsGenerating(true);
     setGenerationProgress(0);
+    setAudioError(null);
     
     // Имитация процесса генерации музыки
     const interval = setInterval(() => {
@@ -80,49 +61,18 @@ const MusicGenerator: React.FC = () => {
 
   // Имитация получения аудиофайла (в реальном приложении здесь будет API-запрос)
   const simulateAudioGeneration = () => {
-    // В реальном приложении здесь будет вызов API нейросети
     setTimeout(() => {
-      // Выбираем аудио в зависимости от выбранного жанра
-      const generatedAudio = genreAudios[parameters.genre] || genreAudios["Электронная"];
-      setAudioUrl(generatedAudio);
-      setIsGenerating(false);
-    }, 1000);
-  };
-
-  const handlePlayPause = () => {
-    if (audioRef.current) {
-      if (audioRef.current.paused) {
-        const playPromise = audioRef.current.play();
-        // Обработка Promise для совместимости со всеми браузерами
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              // Аудио успешно запущено
-            })
-            .catch(error => {
-              console.error("Ошибка воспроизведения:", error);
-            });
-        }
-      } else {
-        audioRef.current.pause();
+      try {
+        // Выбираем аудио в зависимости от выбранного жанра
+        const generatedAudio = genreAudios[parameters.genre] || genreAudios["Электронная"];
+        setAudioUrl(generatedAudio);
+        setIsGenerating(false);
+      } catch (error) {
+        console.error("Ошибка при генерации аудио:", error);
+        setAudioError("Произошла ошибка при генерации музыки. Пожалуйста, попробуйте еще раз.");
+        setIsGenerating(false);
       }
-    }
-  };
-
-  const handleDownload = () => {
-    if (audioUrl) {
-      // Обходное решение для скачивания аудио с внешнего источника
-      const a = document.createElement("a");
-      a.href = audioUrl;
-      a.download = `нейромузыка-${parameters.genre}-${parameters.mood}.mp3`;
-      a.target = "_blank"; // Открываем в новой вкладке для внешних ресурсов
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-      }, 100);
-    }
+    }, 1000);
   };
 
   const handleSliderChange = (name: keyof MusicParameters, value: number[]) => {
@@ -131,6 +81,11 @@ const MusicGenerator: React.FC = () => {
 
   const handleSelectChange = (name: keyof MusicParameters, value: string) => {
     setParameters({ ...parameters, [name]: value });
+  };
+
+  const handleAudioError = (error: any) => {
+    console.error("Ошибка аудио:", error);
+    setAudioError("Не удалось воспроизвести аудио. Пожалуйста, попробуйте сгенерировать трек еще раз.");
   };
 
   return (
@@ -220,39 +175,38 @@ const MusicGenerator: React.FC = () => {
           </Button>
         )}
 
-        {audioUrl && !isGenerating && (
+        {audioError && !isGenerating && (
+          <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
+            {audioError}
+            <Button 
+              onClick={handleGenerate} 
+              variant="outline" 
+              size="sm" 
+              className="mt-2 w-full"
+            >
+              Попробовать снова
+            </Button>
+          </div>
+        )}
+
+        {audioUrl && !isGenerating && !audioError && (
           <div className="mt-6 space-y-4">
-            <div className="bg-accent/30 rounded-lg p-4">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-4">
-                  <Button onClick={handlePlayPause} variant="outline" size="icon" className="rounded-full h-10 w-10 flex-shrink-0">
-                    <Icon name={isPlaying ? "Pause" : "Play"} size={20} />
-                  </Button>
-                  <div className="flex-grow">
-                    <p className="text-sm font-medium mb-1">{parameters.genre} • {parameters.mood} • {parameters.tempo} BPM</p>
-                    {/* preload="auto" обеспечивает предварительную загрузку аудио */}
-                    <audio 
-                      ref={audioRef} 
-                      src={audioUrl} 
-                      className="w-full" 
-                      controls 
-                      preload="auto"
-                      onError={(e) => console.error("Ошибка аудио:", e)}
-                    />
-                  </div>
-                </div>
-              </div>
+            <div className="rounded-lg p-4 border">
+              <p className="text-sm font-medium mb-3">
+                {parameters.genre} • {parameters.mood} • {parameters.tempo} BPM
+              </p>
+              
+              <AudioPlayer 
+                audioUrl={audioUrl} 
+                title={`${parameters.genre} трек - ${parameters.mood}`}
+                onError={handleAudioError}
+              />
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleGenerate} variant="outline" className="flex-grow">
-                <Icon name="RefreshCw" className="mr-2" />
-                Сгенерировать заново
-              </Button>
-              <Button onClick={handleDownload} variant="secondary" className="flex-grow">
-                <Icon name="Download" className="mr-2" />
-                Скачать трек
-              </Button>
-            </div>
+            
+            <Button onClick={handleGenerate} variant="outline" className="w-full">
+              <Icon name="RefreshCw" className="mr-2" />
+              Сгенерировать новый трек
+            </Button>
           </div>
         )}
       </CardContent>

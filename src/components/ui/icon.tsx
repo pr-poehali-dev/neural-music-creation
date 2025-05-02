@@ -21,13 +21,13 @@ const Icon: React.FC<IconProps> = ({
   fallback = "CircleAlert",
   onClick,
 }) => {
-  const IconComponent = LucideIcons[name as keyof typeof LucideIcons] || 
-                         LucideIcons[fallback as keyof typeof LucideIcons];
-
-  if (!IconComponent) {
-    console.warn(`Icon "${name}" not found and fallback "${fallback}" also not found`);
-    return null;
-  }
+  // Проверяем, существует ли такая иконка в библиотеке
+  const IconComponent = 
+    (name in LucideIcons) 
+      ? LucideIcons[name as keyof typeof LucideIcons] 
+      : (fallback in LucideIcons)
+        ? LucideIcons[fallback as keyof typeof LucideIcons]
+        : LucideIcons.HelpCircle;
 
   return (
     <IconComponent

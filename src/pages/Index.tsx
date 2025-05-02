@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MusicGenerator from "@/components/MusicGenerator";
 import InfoSection from "@/components/InfoSection";
+import AudioPlayer from "@/components/AudioPlayer";
 
 const Index = () => {
   // Разные жанры для примеров
@@ -64,30 +65,15 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {exampleAudios.map((example) => (
                 <div key={example.id} className="bg-card p-6 rounded-lg border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-2">Пример {example.id}</h3>
+                  <h3 className="text-lg font-semibold mb-3">Пример {example.id}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     {example.genre} • {example.mood} • {example.bpm} BPM
                   </p>
-                  <audio 
-                    controls 
-                    className="w-full" 
-                    src={example.audio}
-                    preload="auto"
+                  
+                  <AudioPlayer 
+                    audioUrl={example.audio} 
+                    title={`${example.genre} - Пример ${example.id}`} 
                   />
-                  <a 
-                    href={example.audio} 
-                    download={`пример-${example.id}-${example.genre}.mp3`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 text-sm text-primary hover:underline inline-flex items-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Скачать трек
-                  </a>
                 </div>
               ))}
             </div>
